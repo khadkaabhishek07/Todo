@@ -1,0 +1,7 @@
+# Ignore .vs folder
+.vs/
+
+# Ignore bin and obj folders inside the Todo folder
+Todo/bin/
+Todo/obj/
+
