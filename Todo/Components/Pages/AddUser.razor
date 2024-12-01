@@ -1,7 +1,10 @@
 ﻿@page "/add-user"
 @using Todo.Models
+@using Todo.Services
+@inject IUserService userService
 
 <h3>Add User</h3>
+
 
 <div>
     <form>
@@ -41,51 +44,79 @@
     </form>
 </div>
 
-<h3>View User Details</h3>
+@if (errorMessage != null)
+{
+    <p class="error-message">@errorMessage</p>
+}
+
+<h3>Retrieve User Information</h3>
+
 <div>
-    <input type="number" @bind="searchUserId" placeholder="Enter User ID" />
-    <button type="button" @onclick="ViewUserDetails">View Details</button>
+    <label>Enter User ID to Retrieve Info:</label>
+    <input @bind="searchUserId" />
+    <button type="button" @onclick="GetUserInfo">Get User Info</button>
 </div>
 
-@if (selectedUser != null)
+@if (retrievedUser != null)
 {
-    <div>
-        <p><strong>User ID:</strong> @selectedUser.UserId</p>
-        <p><strong>User Name:</strong> @selectedUser.UserName</p>
-        <p><strong>Email:</strong> @selectedUser.Email</p>
-        <p><strong>Name:</strong> @selectedUser.Name</p>
-        <p><strong>Address:</strong> @selectedUser.Address</p>
-        <p><strong>Gender:</strong> @selectedUser.Gender</p>
-        <p><strong>Phone:</strong> @selectedUser.Phone</p>
-    </div>
+    <h4>User Details:</h4>
+    <p><strong>Name:</strong> @retrievedUser.Name</p>
+    <p><strong>Address:</strong> @retrievedUser.Address</p>
 }
 
 @code {
     private User newUser = new User();
-    private List<User> usersList = new List<User>();
+    private string errorMessage;
+
+    // New field for searching user
     private int searchUserId;
-    private User selectedUser;
 
-    private void AddNewUser() 
+    // Field to hold retrieved user information
+    private User retrievedUser;
+
+    private async Task AddNewUser()
     {
-        usersList.Add(new User
+        try
+        {
+            var existingUsers = await userService.LoadUsersAsync();
+            if (existingUsers.Any(u => u.UserId == newUser.UserId))
             {
-                UserId = newUser.UserId,
-                UserName = newUser.UserName,
-                Password = newUser.Password,
-                Email = newUser.Email,
-                Name = newUser.Name,
-                Address = newUser.Address,
-                Gender = newUser.Gender,
-                Phone = newUser.Phone
-            });
+                errorMessage = "A user with this ID already exists.";
+                return;
+            }
 
-        newUser = new User();
+            await userService.SaveUserAsync(newUser);
+            // Reset the new user object after saving.
+            newUser = new User();
+            errorMessage = null; // Clear any previous error messages
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred while adding the user: {ex.Message}";
+            Console.WriteLine(errorMessage); // Log for debugging
+        }
     }
 
-    private void ViewUserDetails()
+    private async Task GetUserInfo()
     {
-        selectedUser = usersList.FirstOrDefault(u => u.UserId == searchUserId);
+        try
+        {
+            var users = await userService.LoadUsersAsync();
+            retrievedUser = users.FirstOrDefault(u => u.UserId == searchUserId);
+
+            if (retrievedUser == null)
+            {
+                errorMessage = "No user found with this ID.";
+            }
+            else
+            {
+                errorMessage = null; // Clear any previous error messages
+            }
+        }
+        catch (Exception ex)
+        {
+            errorMessage = $"An error occurred while retrieving the user: {ex.Message}";
+            Console.WriteLine(errorMessage); // Log for debugging
+        }
     }
 }
-
