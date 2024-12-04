@@ -1,4 +1,5 @@
 ﻿using Microsoft.Extensions.Logging;
+using Todo.Services;
 
 namespace Todo
 {
@@ -16,8 +17,11 @@ namespace Todo
 
             builder.Services.AddMauiBlazorWebView();
 
+            //registering User Services
+            builder.Services.AddSingleton<IUserService, UserService>();
+
 #if DEBUG
-    		builder.Services.AddBlazorWebViewDeveloperTools();
+            builder.Services.AddBlazorWebViewDeveloperTools();
     		builder.Logging.AddDebug();
 #endif
 
