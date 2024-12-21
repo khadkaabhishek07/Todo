@@ -2,6 +2,8 @@
 @using Todo.Models
 @using Todo.Services
 @inject IUserService userService
+@inject NavigationManager navigationManager
+
 
 <h3>Add User</h3>
 
@@ -49,13 +51,13 @@
     <p class="error-message">@errorMessage</p>
 }
 
-<h3>Retrieve User Information</h3>
+@* <h3>Retrieve User Information</h3>
 
 <div>
     <label>Enter User ID to Retrieve Info:</label>
     <input @bind="searchUserId" />
     <button type="button" @onclick="GetUserInfo">Get User Info</button>
-</div>
+</div> *@
 
 @if (retrievedUser != null)
 {
@@ -65,7 +67,7 @@
 }
 
 @code {
-    private User newUser = new User();
+    private User newUser = new User(); //obj created for User Class
     private string errorMessage;
 
     // New field for searching user
@@ -79,16 +81,14 @@
         try
         {
             var existingUsers = await userService.LoadUsersAsync();
-            if (existingUsers.Any(u => u.UserId == newUser.UserId))
-            {
-                errorMessage = "A user with this ID already exists.";
-                return;
-            }
+            // condition chek 
+           
 
             await userService.SaveUserAsync(newUser);
             // Reset the new user object after saving.
             newUser = new User();
             errorMessage = null; // Clear any previous error messages
+            navigationManager.NavigateTo("/");
         }
         catch (Exception ex)
         {

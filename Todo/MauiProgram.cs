@@ -19,6 +19,8 @@ namespace Todo
 
             //registering User Services
             builder.Services.AddSingleton<IUserService, UserService>();
+            builder.Services.AddSingleton<ITodoService, TodoService>();
+            builder.Services.AddSingleton<AuthenticationStateService>();
 
 #if DEBUG
             builder.Services.AddBlazorWebViewDeveloperTools();
