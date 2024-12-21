@@ -1,0 +1,99 @@
+﻿@page "/add-todo"
+@using Todo.Models
+@using Todo.Services
+@inject AuthenticationStateService authStateService
+@inject ITodoService todoService
+@inject NavigationManager navigationManager
+
+<h3>Todo List</h3>
+
+@if (authStateService.IsAuthenticated())
+{
+    <div>
+        <h4>Welcome, @authStateService.GetAuthenticatedUser().Name!</h4>
+        <form>
+            <div>
+                <label>Task:</label>
+                <input type="text" @bind="newTask.Description" />
+            </div>
+            <div>
+                <label>Deadline:</label>
+                <input type="date" @bind="newTask.Deadline" />
+            </div>
+            <button type="button" @onclick="AddTask">Add Task</button>
+        </form>
+
+        @if (!string.IsNullOrEmpty(errorMessage))
+        {
+            <p class="error-message">@errorMessage</p>
+        }
+    </div>
+
+    <h4>Your Tasks</h4>
+    @if (userTasks != null)
+    {
+        <ul>
+            @foreach (var task in userTasks)
+            {
+                <li>@task.Description - @task.Deadline.ToShortDateString()</li>
+            }
+        </ul>
+    }
+    else
+    {
+        <p>No tasks added for @authStateService.GetAuthenticatedUser().Name</p>
+    }
+}
+else
+{
+    navigationManager.NavigateTo("/");
+}
+
+    
+
+
+
+@code {
+    private List<TodoTask> userTasks = new();
+    private TodoTask newTask = new TodoTask();
+    private string errorMessage; // Field to hold error messages
+
+    protected override async Task OnInitializedAsync()
+    {
+        newTask.Deadline = DateTime.Today;  
+        await LoadUserTasks();
+    }
+
+    private async Task LoadUserTasks()
+    {
+        var user = authStateService.GetAuthenticatedUser();
+        if (user != null)
+        {
+            userTasks = await todoService.GetTasksByUserIdAsync(user.UserId);
+        }
+    }
+
+    private async Task AddTask()
+    {
+        var user = authStateService.GetAuthenticatedUser();
+        if (user != null)
+        {
+            newTask.UserId = user.UserId;
+
+            try
+            {
+                await todoService.AddTaskAsync(newTask);
+                // Reload tasks to reflect newly added task
+                await LoadUserTasks();
+                newTask = new TodoTask(); // Reset form
+                errorMessage = null; // Clear any previous error messages
+            }
+            catch (Exception ex)
+            {
+                // Handle error (e.g., show a message to the user)
+                errorMessage = $"Error adding task: {ex.Message}";
+                Console.WriteLine(errorMessage); // Log for debugging
+            }
+        }
+    }
+}

@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Security.Cryptography;
+using System.Text;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Todo.Models;
@@ -16,6 +18,10 @@ namespace Todo.Services
             try
             {
                 var users = await LoadUsersAsync();
+
+                // Hash the user's password
+                user.Password = HashPassword(user.Password);
+
                 users.Add(user);
                 await SaveUsersAsync(users);
             }
@@ -72,6 +78,17 @@ namespace Todo.Services
             {
                 Console.WriteLine($"Unexpected error while saving users: {ex.Message}");
                 throw; 
+            }
+        }
+
+        // Method to hash the password using SHA-256
+        private string HashPassword(string password)
+        {
+            using (var sha256 = SHA256.Create())
+            {
+                var bytes = Encoding.UTF8.GetBytes(password);
+                var hash = sha256.ComputeHash(bytes);
+                return Convert.ToBase64String(hash);
             }
         }
     }
